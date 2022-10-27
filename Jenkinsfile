@@ -1,32 +1,40 @@
-# Jenkinsfile_Java
-#Pipeline script for sample Java project
 pipeline {
+
     agent any
-    tools {
-        maven "MAVEN"
-        jdk "JDK"
-    }
+
     stages {
-        stage('Initialize'){
-            steps{
-                echo "PATH = ${M2_HOME}/bin:${PATH}"
-                echo "M2_HOME = /opt/maven"
-            }
-        }
-        stage('Build') {
+
+        stage("Interactive_Input") {
             steps {
-                dir("/var/lib/jenkins/workspace/demopipelinetask/my-app") {
-                sh 'mvn -B -DskipTests clean package'
-                }
-            }
-        }
-     }
-    post {
-       always {
-          junit(
-        allowEmptyResults: true,
-        testResults: '*/test-reports/.xml'
-      )
-      }
-   }
-}
+                script {
+
+                    // Variables for input
+                    def inputConfig
+                    def inputTest
+
+                    // Get the input
+                    def userInput = input(
+                            id: 'userInput', message: 'Enter path of test reports:?',
+                            parameters: [
+
+                                    string(defaultValue: 'None',
+                                            description: 'Path of config file',
+                                            name: 'Config'),
+                                    string(defaultValue: 'None',
+                                            description: 'Test Info file',
+                                            name: 'Test'),
+                            ])
+
+                    // Save to variables. Default to empty string if not found.
+                    inputConfig = userInput.Config?:''
+                    inputTest = userInput.Test?:''
+
+                    // Echo to console
+                    echo("IQA Sheet Path: ${inputConfig}")
+                    echo("Test Info file path: ${inputTest}")
+
+                    // Write to file
+                    writeFile file: "inputData.txt", text: "Config=${inputConfig}\r\nTest=${inputTest}"
+
+                    // Archive the file (or whatever you want to do with it)
+                    archiveArtifacts 'inputData.txt'
